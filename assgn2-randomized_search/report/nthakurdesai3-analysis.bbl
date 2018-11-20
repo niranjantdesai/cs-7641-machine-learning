@@ -1,0 +1,22 @@
+\begin{thebibliography}{1}
+
+\bibitem{glorotUnderstandingDifficultyTraining}
+Xavier Glorot and Yoshua Bengio.
+\newblock Understanding the difficulty of training deep feedforward neural
+  networks.
+\newblock page~8.
+
+\bibitem{vanlaarhovenSimulatedAnnealing1987}
+Peter J.~M. {van Laarhoven} and Emile H.~L. Aarts.
+\newblock Simulated annealing.
+\newblock In Peter J.~M. {van Laarhoven} and Emile H.~L. Aarts, editors, {\em
+  Simulated {{Annealing}}: {{Theory}} and {{Applications}}}, Mathematics and
+  Its Applications, pages 7--15. {Springer Netherlands}, 1987.
+
+\bibitem{balujaRemovingGeneticsStandard1995}
+Shumeet Baluja and Rich Caruana.
+\newblock Removing the {{Genetics}} from the {{Standard Genetic Algorithm}}.
+\newblock In {\em Machine {{Learning Proceedings}} 1995}, pages 38--46.
+  {Elsevier}, 1995.
+
+\end{thebibliography}

@@ -5,53 +5,12 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.metrics import accuracy_score
 import numpy as np
 from util import init_weights, compute_loss, perturb_weights, plot_loss
-
-
-class SimAnnealStep:
-    """
-    Take a Monte Carlo step for simulated annealing by perturbing the weights of a neural network
-    """
-    def __init__(self, step_size=0.5):
-        """
-        :param step_size: initial step
-        """
-        self.step_size = step_size
-
-    def __call__(self, x):
-        """
-        Randomly displaces coefficients and intercepts of a neural network
-        :param x: ndarray containing lists comprising the coefficients and intercepts of a neural network
-        :return: x_new: randomly displaced coefficients and intercepts
-        """
-        coeffs = x[0]
-        intercepts = x[1]
-
-        coeffs_new = perturb_weights(coeffs, self.step_size)
-        intercepts_new = perturb_weights(intercepts, self.step_size)
-        x_new = np.array([coeffs_new, intercepts_new])
-
-        return x_new
-
-
-def compute_loss_helper(weights, X, y_true, net):
-    """
-    Helper function to compute loss of a neural network for simulated annealing
-    :param weights: ndarray of coefficients and biases
-    :param X: data
-    :param y_true: ground truth
-    :param net: MLPClassifier object
-    :return: loss: loss of a neural network
-    """
-    net.coefs_ = weights[:len(net.coefs_)]
-    net.intercepts_ = weights[len(net.coefs_):]
-    loss = compute_loss(X, y_true, net)
-
-    return loss
+import time
+import matplotlib.pyplot as plt
 
 
 if __name__ == '__main__':
-    debug = True
-    np.random.seed(7)   # seed NumPy's random number generator for reproducibility of results
+    debug = False
 
     X, y = load_breast_cancer_data('../data/breast-cancer-wisconsin-data/data.csv')
     print('Total number of examples in the dataset: %d' % X.shape[0])
@@ -63,50 +22,136 @@ if __name__ == '__main__':
     # Split into training and test data. Use random_state to get the same results in every run
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.4, random_state=18)
 
-    # Initialize neural network
-    nn = MLPClassifier(hidden_layer_sizes=(5, 2), random_state=7, max_iter=1, warm_start=True)
-    nn.fit(X_train, y_train)
-
-    # Initialize weights
-    nn.coefs_, nn.intercepts_ = init_weights(X_train.shape[1], list(nn.hidden_layer_sizes))
-    initial_wts = np.array([nn.coefs_, nn.intercepts_])    # create a ndarray containing both coefficients and biases
-    wts = initial_wts
-    loss_prev = compute_loss_helper(wts, X_train, y_train, nn)
-
     ### Simulated annealing
     # Set params
-    T_init = 2500
-    T_min = 2.5
-    decay = 0.95
-    num_iters = 100     # number of iterations for a given temperature
+    # T_init = 1000
+    # T_min = 1e-6
+    # decay = 0.95
+    # num_iters = 100     # number of iterations for a given temperature
+    # step_size = 0.1
+    #
+    # T = T_init
+    # loss = []
+    # while T > T_min:
+    #     if debug:
+    #         print()
+    #         print('Temperature: ', T)
+    #     for i in range(num_iters):
+    #         # Save current parameters
+    #         coefs_prev = nn.coefs_
+    #         intercepts_prev = nn.intercepts_
+    #         loss_prev = loss_next
+    #
+    #         if debug:
+    #             print('Iteration # %d' % i)
+    #             print('Loss = ', loss_prev)
+    #
+    #         # Update parameters
+    #         nn.coefs_ = perturb_weights(nn.coefs_, step_size)
+    #         nn.intercepts_ = perturb_weights(nn.intercepts_, step_size)
+    #         loss_next = compute_loss(X_train, y_train, nn)
+    #
+    #         # Metropolis criterion for updating weights
+    #         prob = np.exp((loss_prev - loss_next) / T)
+    #         rand = np.random.rand()
+    #         if loss_next < loss_prev or prob >= rand:
+    #             pass
+    #         else:
+    #             nn.coefs_ = coefs_prev
+    #             nn.intercepts_ = intercepts_prev
+    #             loss_next = loss_prev
+    #
+    #         loss.append(loss_next)
+    #
+    #     T *= decay
 
-    nn_takestep = SimAnnealStep()
-    T = T_init
-    loss =[]
-    while T > T_min:
-        if debug:
-            print()
-            print('Temperature: ', T)
+    T_init = 1e5
+    # decay = np.arange(0.25, 0.96, 0.1)
+    decay = np.arange(0.75, 0.76, 0.1)
+    num_iters = 5000  # number of iterations for a given temperature
+    step_size = 0.1
+    losses = np.empty(decay.size)
+    test_accs = np.empty(decay.size)
+
+    for idx, decay_rate in enumerate(decay):
+        np.random.seed(7)  # seed NumPy's random number generator for reproducibility of results
+        # Initialize neural network
+        nn = MLPClassifier(hidden_layer_sizes=(5, 2), random_state=7, max_iter=1, warm_start=True)
+        nn.fit(X_train, y_train)
+
+        # Initialize weights
+        nn.coefs_, nn.intercepts_ = init_weights(X_train.shape[1], list(nn.hidden_layer_sizes))
+        loss_next = compute_loss(X_train, y_train, nn)
+
+        T = T_init
+        loss = []
+        start = time.time()
         for i in range(num_iters):
+            # Save current parameters
+            coefs_prev = nn.coefs_
+            intercepts_prev = nn.intercepts_
+            loss_prev = loss_next
+
             if debug:
                 print('Iteration # %d' % i)
-            wts_new = nn_takestep(wts)
-            loss_new = compute_loss_helper(wts_new, X_train, y_train, nn)
+                print('Loss = ', loss_prev)
+
+            # Update parameters
+            nn.coefs_ = perturb_weights(nn.coefs_, step_size)
+            nn.intercepts_ = perturb_weights(nn.intercepts_, step_size)
+            loss_next = compute_loss(X_train, y_train, nn)
 
             # Metropolis criterion for updating weights
-            prob = np.exp((loss_new - loss) / T)
+            prob = np.exp((loss_prev - loss_next) / T)
             rand = np.random.rand()
-            if loss_new < loss_prev or prob >= rand:
-                wts = wts_new
-                loss_prev = loss_new
+            if loss_next < loss_prev or prob >= rand:
+                pass
+            else:
+                nn.coefs_ = coefs_prev
+                nn.intercepts_ = intercepts_prev
+                loss_next = loss_prev
 
-        T *= decay
-        loss.append(loss_prev)
+            loss.append(loss_next)
+            # diff = loss_prev - loss_next
+            # if diff > 0 and diff < eps:
+            #     break
+            T *= decay_rate
 
-    # Plot loss
-    plot_loss(loss, title='Training loss curve: simulated annealing')
+        end = time.time()
+        runtime = end - start
 
-    # Find accuracy on the test set
-    y_pred = nn.predict(X_test)
-    test_accuracy = accuracy_score(y_test, y_pred)
-    print('Accuracy on test data using randomized hill climbing is %.2f%%' % (test_accuracy * 100))
+        losses[idx] = loss[-1]
+
+        # # Plot loss
+        plot_loss(loss, filename='../plots/nn_loss_sa_new.png', title='Training loss curve: simulated annealing')
+
+        # Find accuracy on the test set
+        y_pred = nn.predict(X_test)
+        test_accuracy = accuracy_score(y_test, y_pred)
+        print('Accuracy on test data using simulated annealing is %.2f%%' % (test_accuracy * 100))
+        test_accs[idx] = test_accuracy*100
+
+        # # Timing information
+        # print('Time taken to complete simulated annealing is %f seconds' % runtime)
+
+    # Plot losses and test accuracies for different decay rates
+    # fig, ax = plt.subplots()
+    # plt.grid()
+    # ax.plot(decay, losses, color='tab:blue', label='Training loss')
+    # ax.set_xlabel('Temperature decay rate')
+    # ax.set_ylabel('Loss')
+    # ax2 = ax.twinx()
+    # ax2.plot(decay, test_accs, color='tab:red', label='Test accuracy (%)')
+    # ax2.set_ylabel('Accuracy (%)')
+    # lines = ax.get_lines() + ax2.get_lines()
+    # ax.legend(lines, [line.get_label() for line in lines])
+    # ax.set_title('SA performance for different decay rates')
+    # fig.tight_layout()
+    # plt.savefig('../plots/nn_sa_decay_rates.png')
+    # plt.figure()
+    # plt.plot(decay, losses)
+    # plt.title('SA performance for different decay rates')
+    # plt.xlabel('Temperature decay rate')
+    # plt.ylabel('Loss')
+    # plt.grid()
+    # plt.savefig('../plots/nn_sa_decay_rates.png')

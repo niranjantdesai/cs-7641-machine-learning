@@ -5,7 +5,8 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.metrics import accuracy_score
 import numpy as np
 import matplotlib.pyplot as plt
-from util import init_weights, compute_loss, perturb_weights
+from util import init_weights, compute_loss, perturb_weights, plot_loss
+import time
 
 
 if __name__ == '__main__':
@@ -25,52 +26,76 @@ if __name__ == '__main__':
     nn = MLPClassifier(hidden_layer_sizes=(5, 2), random_state=7, max_iter=1, warm_start=True)
     nn.fit(X_train, y_train)
 
-    # Initialize weights
-    nn.coefs_, nn.intercepts_ = init_weights(X_train.shape[1], list(nn.hidden_layer_sizes))
-    loss_next = compute_loss(X_train, y_train, nn)
-
     # Randomized search
     step_sz = 1e-1
-    max_iters = 10000
-    # random_state = np.random.RandomState(seed=7)
-    np.random.seed(7)   # seed NumPy's random number generator for reproducibility of results
-    train_loss = np.empty(max_iters)
-    for it in range(max_iters):
-        # Save current parameters
-        coefs_prev = nn.coefs_
-        intercepts_prev = nn.intercepts_
-        loss_prev = loss_next
+    max_iters = 5000
+    eps = 1e-5
+    num_restarts = 10
+    losses = np.empty(num_restarts)
+    times = np.empty(num_restarts)
+    coefs = []
+    intercepts = []
+    np.random.seed(7)  # seed NumPy's random number generator for reproducibility of results
+    for run in range(num_restarts):
 
-        if debug:
-            print('Iteration %d' % it)
-            print('Loss = ', loss_prev)
-            print()
-
-        # Update parameters
-        nn.coefs_ = perturb_weights(nn.coefs_, step_sz)
-        nn.intercepts_ = perturb_weights(nn.intercepts_, step_sz)
-
-        # Keep the updated parameters only if the loss using them decreases
+        # Initialize weights
+        nn.coefs_, nn.intercepts_ = init_weights(X_train.shape[1], list(nn.hidden_layer_sizes))
         loss_next = compute_loss(X_train, y_train, nn)
-        if loss_next >= loss_prev:
-            nn.coefs_ = coefs_prev
-            nn.intercepts_ = intercepts_prev
-            loss_next = loss_prev
 
-        train_loss[it] = loss_next
+        train_loss = []
+        start = time.time()
+        for it in range(max_iters):
+            # Save current parameters
+            coefs_prev = nn.coefs_
+            intercepts_prev = nn.intercepts_
+            loss_prev = loss_next
 
-    # Plot the loss curve
-    xrange = np.arange(max_iters) + 1
-    plt.figure()
-    plt.plot(xrange, train_loss)
-    plt.title('Training loss curve: randomized hill climbing')
-    plt.xlabel('Iterations')
-    plt.ylabel("Loss")
-    plt.grid()
-    # plt.savefig(fig_path + 'nn_train_loss.png')
-    plt.show()
+            if debug:
+                print('Iteration %d' % it)
+                print('Loss = ', loss_prev)
+                print()
+
+            # Update parameters
+            nn.coefs_ = perturb_weights(nn.coefs_, step_sz)
+            nn.intercepts_ = perturb_weights(nn.intercepts_, step_sz)
+
+            # Keep the updated parameters only if the loss using them decreases
+            loss_next = compute_loss(X_train, y_train, nn)
+            if loss_next >= loss_prev:
+                nn.coefs_ = coefs_prev
+                nn.intercepts_ = intercepts_prev
+                loss_next = loss_prev
+
+            # train_loss[it] = loss_next
+            train_loss.append(loss_next)
+
+            diff = loss_prev - loss_next
+            if diff > 0 and diff < eps:
+                break
+
+        end = time.time()
+        times[run] = end - start
+
+        losses[run] = train_loss[-1]
+        coefs.append(nn.coefs_)
+        intercepts.append(nn.intercepts_)
+
+    # # Plot loss curve
+    # plot_loss(train_loss, filename='../plots/nn_loss_rhc.png', title='Training loss curve: randomized hill climbing')
+
+    # Find best weights
+    idx = np.argmin(losses)
+    nn.coefs_ = coefs[idx]
+    nn.intercepts_ = intercepts[idx]
+
+    # Plot losses across runs
+    plot_loss(losses, filename='../plots/nn_runs_rhc.png', title='Losses for different runs with RHC', xlabel='Run',
+              ylabel='Loss')
 
     # Find accuracy on the test set
     y_pred = nn.predict(X_test)
     test_accuracy = accuracy_score(y_test, y_pred)
     print('Accuracy on test data using randomized hill climbing is %.2f%%' % (test_accuracy * 100))
+
+    # Timing information
+    print('Average time per RHC run is %f seconds' % np.mean(times))

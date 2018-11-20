@@ -78,7 +78,7 @@ def perturb_weights(weights, step_size):
     return perturbed_wts
 
 
-def plot_loss(loss, title='Loss curve', xlabel='Iterations', ylabel='Loss'):
+def plot_loss(loss, filename, title='Loss curve', xlabel='Iterations', ylabel='Loss'):
     """
     Plots loss curve
     :param loss: list/ndarray of losses at each iteration
@@ -94,5 +94,5 @@ def plot_loss(loss, title='Loss curve', xlabel='Iterations', ylabel='Loss'):
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.grid()
-    # plt.savefig(fig_path + 'nn_train_loss.png')
-    plt.show()
+    plt.savefig(filename)
+    # plt.show()

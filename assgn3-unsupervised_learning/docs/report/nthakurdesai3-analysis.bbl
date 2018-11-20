@@ -1,0 +1,38 @@
+\begin{thebibliography}{1}
+
+\bibitem{streetNuclearFeatureExtraction1993}
+W.~Nick Street, W.~H. Wolberg, and O.~L. Mangasarian.
+\newblock Nuclear feature extraction for breast tumor diagnosis.
+\newblock In {\em Biomedical {{Image Processing}} and {{Biomedical
+  Visualization}}}, volume 1905, pages 861--871. {International Society for
+  Optics and Photonics}, July 1993.
+
+\bibitem{cortezModelingWinePreferences2009}
+Paulo Cortez, Ant\'onio Cerdeira, Fernando Almeida, Telmo Matos, and Jos\'e
+  Reis.
+\newblock Modeling wine preferences by data mining from physicochemical
+  properties.
+\newblock {\em Decision Support Systems}, 47(4):547--553, November 2009.
+
+\bibitem{arthurKmeansAdvantagesCareful2007}
+David Arthur and Sergei Vassilvitskii.
+\newblock K-means++: {{The Advantages}} of {{Careful Seeding}}.
+\newblock In {\em Proceedings of the {{Eighteenth Annual ACM}}-{{SIAM
+  Symposium}} on {{Discrete Algorithms}}}, SODA '07, pages 1027--1035. {Society
+  for Industrial and Applied Mathematics}, 2007.
+
+\bibitem{rousseeuwSilhouettesGraphicalAid1987}
+Peter~J. Rousseeuw.
+\newblock Silhouettes: {{A}} graphical aid to the interpretation and validation
+  of cluster analysis.
+\newblock {\em Journal of Computational and Applied Mathematics}, 20:53--65,
+  November 1987.
+
+\bibitem{vinhInformationTheoreticMeasures2009}
+Nguyen~Xuan Vinh, Julien Epps, and James Bailey.
+\newblock Information {{Theoretic Measures}} for {{Clusterings Comparison}}:
+  {{Is}} a {{Correction}} for {{Chance Necessary}}?
+\newblock In {\em Proceedings of the 26th {{Annual International Conference}}
+  on {{Machine Learning}}}, ICML '09, pages 1073--1080. {ACM}, 2009.
+
+\end{thebibliography}
