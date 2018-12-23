@@ -99,3 +99,6 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# Assignment 4 submission
+assgn4-reinforcement_learning/nthakurdesai3/*
